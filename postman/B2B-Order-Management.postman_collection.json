@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "B2B Integration & Order Management",
+    "description": "Başarılı istekler ve hata senaryoları. Environment: B2B Local.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5187" }
+  ],
+  "item": [
+    {
+      "name": "01 Health",
+      "item": [
+        {
+          "name": "API root",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('API adı dönmeli', () => pm.expect(pm.response.json().name).to.include('B2B'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/" }
+        }
+      ]
+    },
+    {
+      "name": "02 Suppliers",
+      "item": [
+        {
+          "name": "List suppliers",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "pm.test('En az 3 tedarikçi', () => pm.expect(body.totalCount).to.be.at.least(3));",
+            "const inactive = body.items.find(x => x.status === 'Inactive');",
+            "if (inactive) pm.environment.set('inactiveSupplierId', inactive.id);",
+            "const active = body.items.find(x => x.status === 'Active');",
+            "if (active) pm.environment.set('supplierId', active.id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/suppliers" }
+        },
+        {
+          "name": "Get supplier by id",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Kod dolu', () => pm.expect(pm.response.json().code).to.be.a('string'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/suppliers/{{supplierId}}" }
+        },
+        {
+          "name": "Get missing supplier - 404",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404', () => pm.response.to.have.status(404));",
+            "pm.test('NOT_FOUND', () => pm.expect(pm.response.json().code).to.eql('NOT_FOUND'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/suppliers/99999" }
+        },
+        {
+          "name": "Create supplier duplicate code - 409",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409', () => pm.response.to.have.status(409));",
+            "pm.test('DUPLICATE_CODE', () => pm.expect(pm.response.json().code).to.eql('DUPLICATE_CODE'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SUP-NORDIC\",\n  \"companyName\": \"Kopya Firma\",\n  \"taxNumber\": \"0000000001\",\n  \"email\": \"kopya@example.com\",\n  \"phone\": \"+90 212 000 0000\",\n  \"city\": \"İstanbul\"\n}" },
+            "url": "{{baseUrl}}/api/suppliers"
+          }
+        },
+        {
+          "name": "Create supplier validation - 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"\",\n  \"companyName\": \"\",\n  \"taxNumber\": \"\",\n  \"email\": \"not-an-email\",\n  \"phone\": \"\",\n  \"city\": \"\"\n}" },
+            "url": "{{baseUrl}}/api/suppliers"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Products",
+      "item": [
+        {
+          "name": "List products",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const motor = body.items.find(x => x.sku === 'NRD-MTR-001');",
+            "const cable = body.items.find(x => x.sku === 'NRD-CBL-220');",
+            "if (motor) pm.environment.set('productId', motor.id);",
+            "if (cable) pm.environment.set('lowStockProductId', cable.id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/products" }
+        },
+        {
+          "name": "Create product for inactive supplier - 409",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409', () => pm.response.to.have.status(409));",
+            "pm.test('SUPPLIER_INACTIVE', () => pm.expect(pm.response.json().code).to.eql('SUPPLIER_INACTIVE'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"supplierId\": {{inactiveSupplierId}},\n  \"sku\": \"NEW-SKU-001\",\n  \"name\": \"Deneme Ürün\",\n  \"category\": \"Test\",\n  \"unitPrice\": 10,\n  \"currency\": \"TRY\",\n  \"stockQuantity\": 5,\n  \"minOrderQuantity\": 1\n}" },
+            "url": "{{baseUrl}}/api/products"
+          }
+        },
+        {
+          "name": "Get missing product - 404",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404', () => pm.response.to.have.status(404));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/products/99999" }
+        }
+      ]
+    },
+    {
+      "name": "04 Orders",
+      "item": [
+        {
+          "name": "List customers",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "const customers = pm.response.json();",
+            "pm.environment.set('customerId', customers[0].id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/customers" }
+        },
+        {
+          "name": "Create draft order",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "const body = pm.response.json();",
+            "pm.test('Draft', () => pm.expect(body.status).to.eql('Draft'));",
+            "pm.environment.set('draftOrderId', body.id);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerId\": {{customerId}},\n  \"supplierId\": {{supplierId}},\n  \"items\": [{ \"productId\": {{productId}}, \"quantity\": 1 }],\n  \"notes\": \"Postman taslak sipariş\"\n}" },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "Create order below min quantity - 400",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('400 veya 422/409', () => pm.expect(pm.response.code).to.be.oneOf([400, 409, 422]));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerId\": {{customerId}},\n  \"supplierId\": {{supplierId}},\n  \"items\": [{ \"productId\": {{lowStockProductId}}, \"quantity\": 1 }]\n}" },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "Create order over stock - 409",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409', () => pm.response.to.have.status(409));",
+            "pm.test('STOCK_INSUFFICIENT', () => pm.expect(pm.response.json().code).to.eql('STOCK_INSUFFICIENT'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerId\": {{customerId}},\n  \"supplierId\": {{supplierId}},\n  \"items\": [{ \"productId\": {{lowStockProductId}}, \"quantity\": 50 }]\n}" },
+            "url": "{{baseUrl}}/api/orders"
+          }
+        },
+        {
+          "name": "Submit draft order",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Submitted', () => pm.expect(pm.response.json().status).to.eql('Submitted'));"
+          ]}}],
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/orders/{{draftOrderId}}/submit" }
+        },
+        {
+          "name": "Confirm submitted order",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Confirmed', () => pm.expect(pm.response.json().status).to.eql('Confirmed'));"
+          ]}}],
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/orders/{{draftOrderId}}/confirm" }
+        },
+        {
+          "name": "Invalid transition ship then cancel confirmed - ship",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/orders/{{draftOrderId}}/ship" }
+        },
+        {
+          "name": "Cancel shipped order - 409",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('409', () => pm.response.to.have.status(409));",
+            "pm.test('INVALID_STATUS_TRANSITION', () => pm.expect(pm.response.json().code).to.eql('INVALID_STATUS_TRANSITION'));"
+          ]}}],
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/orders/{{draftOrderId}}/cancel" }
+        }
+      ]
+    },
+    {
+      "name": "05 Integration",
+      "item": [
+        {
+          "name": "Missing API key - 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customerCode\": \"CUS-METAL\",\n  \"externalOrderNo\": \"ERP-401\",\n  \"items\": [{ \"sku\": \"NRD-SNS-014\", \"quantity\": 5 }]\n}" },
+            "url": "{{baseUrl}}/api/integrations/orders"
+          }
+        },
+        {
+          "name": "Invalid API key - 401",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('401', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Api-Key", "value": "{{invalidApiKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"customerCode\": \"CUS-METAL\",\n  \"externalOrderNo\": \"ERP-401B\",\n  \"items\": [{ \"sku\": \"NRD-SNS-014\", \"quantity\": 5 }]\n}" },
+            "url": "{{baseUrl}}/api/integrations/orders"
+          }
+        },
+        {
+          "name": "Unknown customer - 404 and log",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('404', () => pm.response.to.have.status(404));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Api-Key", "value": "{{apiKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"customerCode\": \"CUS-UNKNOWN\",\n  \"externalOrderNo\": \"ERP-FAIL-1\",\n  \"items\": [{ \"sku\": \"NRD-SNS-014\", \"quantity\": 5 }]\n}" },
+            "url": "{{baseUrl}}/api/integrations/orders"
+          }
+        },
+        {
+          "name": "Create integration order",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created', () => pm.response.to.have.status(201));",
+            "pm.test('Submitted', () => pm.expect(pm.response.json().status).to.eql('Submitted'));",
+            "pm.test('Source Integration', () => pm.expect(pm.response.json().source).to.eql('Integration'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Api-Key", "value": "{{apiKey}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"customerCode\": \"CUS-METAL\",\n  \"externalOrderNo\": \"ERP-10045\",\n  \"items\": [{ \"sku\": \"NRD-SNS-014\", \"quantity\": 10 }],\n  \"notes\": \"ERP kaynaklı acil sipariş\"\n}" },
+            "url": "{{baseUrl}}/api/integrations/orders"
+          }
+        },
+        {
+          "name": "List integration logs",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Log var', () => pm.expect(pm.response.json().totalCount).to.be.at.least(1));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/integrations/logs" }
+        }
+      ]
+    }
+  ]
+}

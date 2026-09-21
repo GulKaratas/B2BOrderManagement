@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/B2BOrderManagement.Api/B2BOrderManagement.Api.csproj" />
+  </Folder>
+</Solution>

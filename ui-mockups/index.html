@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B2B Order Hub — Admin Panel</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2937;
+      --line: #334155;
+      --text: #e5eefb;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --danger: #fb7185;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    aside {
+      background: #0b1220;
+      border-right: 1px solid var(--line);
+      padding: 24px 16px;
+    }
+    .logo { font-weight: 700; letter-spacing: .04em; margin-bottom: 32px; }
+    .logo span { color: var(--accent); }
+    nav button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: 0;
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+    nav button.active, nav button:hover { background: #1e293b; color: var(--text); }
+    main { padding: 28px; }
+    h1 { margin: 0 0 8px; font-size: 24px; }
+    .sub { color: var(--muted); margin-bottom: 24px; }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .kpi-label { color: var(--muted); font-size: 12px; }
+    .kpi-value { font-size: 28px; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { color: var(--muted); font-weight: 600; }
+    .badge { padding: 4px 8px; border-radius: 999px; font-size: 12px; }
+    .ok { background: rgba(52,211,153,.15); color: var(--ok); }
+    .warn { background: rgba(251,191,36,.15); color: var(--warn); }
+    .danger { background: rgba(251,113,133,.15); color: var(--danger); }
+    .info { background: rgba(56,189,248,.15); color: var(--accent); }
+    .hidden { display: none; }
+    .flow { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 24px; }
+    .step { background: #0b1220; border: 1px dashed var(--line); padding: 10px 12px; border-radius: 10px; font-size: 13px; }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="logo">B2B <span>Order Hub</span></div>
+      <nav>
+        <button class="active" data-page="dashboard">Dashboard</button>
+        <button data-page="suppliers">Tedarikçiler</button>
+        <button data-page="products">Ürünler</button>
+        <button data-page="orders">Siparişler</button>
+        <button data-page="logs">Entegrasyon Logları</button>
+      </nav>
+    </aside>
+    <main>
+      <section id="dashboard">
+        <h1>Operasyon özeti</h1>
+        <div class="sub">Tedarikçi, stok ve sipariş süreçlerinin tek ekrandan takibi</div>
+        <div class="kpis">
+          <div class="card"><div class="kpi-label">Aktif tedarikçi</div><div class="kpi-value">2</div></div>
+          <div class="card"><div class="kpi-label">Bekleyen sipariş</div><div class="kpi-value">1</div></div>
+          <div class="card"><div class="kpi-label">Onaylı sipariş</div><div class="kpi-value">1</div></div>
+          <div class="card"><div class="kpi-label">Başarısız entegrasyon</div><div class="kpi-value">1</div></div>
+        </div>
+        <div class="card">
+          <strong>Sipariş akışı</strong>
+          <div class="flow">
+            <div class="step">1. Taslak</div>
+            <div class="step">2. Gönderildi</div>
+            <div class="step">3. Onay / Red</div>
+            <div class="step">4. Sevkiyat</div>
+          </div>
+          Bugünkü kural: stok ancak onay anında düşer. Entegrasyon siparişleri doğrudan Gönderildi statüsünde açılır.
+        </div>
+      </section>
+
+      <section id="suppliers" class="hidden">
+        <h1>Tedarikçiler</h1>
+        <div class="sub">Master data + API Key ile B2B erişim</div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Kod</th><th>Firma</th><th>Şehir</th><th>Durum</th></tr></thead>
+            <tbody>
+              <tr><td>SUP-NORDIC</td><td>Nordic Components A.Ş.</td><td>İstanbul</td><td><span class="badge ok">Active</span></td></tr>
+              <tr><td>SUP-ANADOLU</td><td>Anadolu Endüstriyel Ltd.</td><td>Ankara</td><td><span class="badge ok">Active</span></td></tr>
+              <tr><td>SUP-EGE</td><td>Ege Ambalaj Sanayi</td><td>İzmir</td><td><span class="badge danger">Inactive</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="products" class="hidden">
+        <h1>Ürün kataloğu</h1>
+        <div class="sub">SKU, stok ve minimum sipariş adedi</div>
+        <div class="card">
+          <table>
+            <thead><tr><th>SKU</th><th>Ürün</th><th>Tedarikçi</th><th>Stok</th><th>Min.</th><th>Durum</th></tr></thead>
+            <tbody>
+              <tr><td>NRD-MTR-001</td><td>Endüstriyel Motor 1.5kW</td><td>Nordic</td><td>40</td><td>1</td><td><span class="badge ok">Active</span></td></tr>
+              <tr><td>NRD-CBL-220</td><td>Güç Kablosu 3x2.5mm</td><td>Nordic</td><td>8</td><td>10</td><td><span class="badge warn">Kritik stok</span></td></tr>
+              <tr><td>AND-OLD-099</td><td>Eski Model Rulman</td><td>Anadolu</td><td>15</td><td>1</td><td><span class="badge danger">Discontinued</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="orders" class="hidden">
+        <h1>Siparişler</h1>
+        <div class="sub">Portal ve entegrasyon kaynaklı siparişler</div>
+        <div class="card">
+          <table>
+            <thead><tr><th>No</th><th>Müşteri</th><th>Kaynak</th><th>Tutar</th><th>Durum</th></tr></thead>
+            <tbody>
+              <tr><td>ORD-20260901-0001</td><td>MetalTech</td><td>Portal</td><td>25.000 TRY</td><td><span class="badge info">Draft</span></td></tr>
+              <tr><td>ORD-20260910-0002</td><td>AutoLine</td><td>Integration</td><td>17.000 TRY</td><td><span class="badge warn">Submitted</span></td></tr>
+              <tr><td>ORD-20260912-0003</td><td>MetalTech</td><td>Portal</td><td>3.200 TRY</td><td><span class="badge ok">Confirmed</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="logs" class="hidden">
+        <h1>Entegrasyon logları</h1>
+        <div class="sub">Inbound CreateOrder olayları</div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Referans</th><th>Olay</th><th>Durum</th><th>Hata</th></tr></thead>
+            <tbody>
+              <tr><td>ORD-20260910-0002</td><td>CreateOrder</td><td><span class="badge ok">Success</span></td><td>—</td></tr>
+              <tr><td>EXT-FAIL-001</td><td>CreateOrder</td><td><span class="badge danger">Failed</span></td><td>Müşteri kodu bulunamadı.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script>
+    const buttons = document.querySelectorAll("nav button");
+    const pages = ["dashboard", "suppliers", "products", "orders", "logs"];
+    buttons.forEach(btn => btn.addEventListener("click", () => {
+      buttons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      pages.forEach(id => document.getElementById(id).classList.toggle("hidden", id !== btn.dataset.page));
+    }));
+  </script>
+</body>
+</html>

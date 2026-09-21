@@ -1,0 +1,43 @@
+@baseUrl = http://localhost:5187
+
+GET {{baseUrl}}/
+
+###
+
+GET {{baseUrl}}/api/suppliers
+
+###
+
+GET {{baseUrl}}/api/products
+
+###
+
+GET {{baseUrl}}/api/customers
+
+###
+
+GET {{baseUrl}}/api/orders
+
+###
+
+POST {{baseUrl}}/api/orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "supplierId": 1,
+  "items": [{ "productId": 1, "quantity": 1 }],
+  "notes": "HTTP dosyası deneme siparişi"
+}
+
+###
+
+POST {{baseUrl}}/api/integrations/orders
+Content-Type: application/json
+X-Api-Key: sup-nordic-demo-key-2026
+
+{
+  "customerCode": "CUS-METAL",
+  "externalOrderNo": "ERP-10045",
+  "items": [{ "sku": "NRD-SNS-014", "quantity": 10 }]
+}
