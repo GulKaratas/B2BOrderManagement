@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Defs_Entegrasyon"
+                  targetNamespace="https://b2b-order-management.local">
+  <bpmn:collaboration id="Collab_Integ">
+    <bpmn:participant id="Part_ERP" name="Tedarikçi ERP" processRef="Proc_ERP"/>
+    <bpmn:participant id="Part_B2B" name="B2B Order Management" processRef="Proc_B2B"/>
+    <bpmn:messageFlow id="mf1" name="Sipariş isteği" sourceRef="Task_Send" targetRef="Start_Integ"/>
+    <bpmn:messageFlow id="mf2" name="Yetkisiz / kural hatası" sourceRef="End_Fail" targetRef="Task_HandleFail"/>
+    <bpmn:messageFlow id="mf3" name="Sipariş alındı" sourceRef="End_Success" targetRef="Task_HandleOk"/>
+  </bpmn:collaboration>
+
+  <bpmn:process id="Proc_ERP" isExecutable="false">
+    <bpmn:startEvent id="Start_ERP" name="ERP'de sipariş oluştu">
+      <bpmn:outgoing>e1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="Task_Send" name="Sipariş isteğini ilet">
+      <bpmn:incoming>e1</bpmn:incoming>
+      <bpmn:outgoing>e2</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:exclusiveGateway id="GW_ERP" name="Yanıt türü">
+      <bpmn:incoming>e2</bpmn:incoming>
+      <bpmn:outgoing>e3a</bpmn:outgoing>
+      <bpmn:outgoing>e3b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_HandleFail" name="Hata kaydını incele">
+      <bpmn:incoming>e3b</bpmn:incoming>
+      <bpmn:outgoing>e4b</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_HandleOk" name="Sipariş numarasını kaydet">
+      <bpmn:incoming>e3a</bpmn:incoming>
+      <bpmn:outgoing>e4a</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="End_ERP_Fail" name="İletim başarısız">
+      <bpmn:incoming>e4b</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_ERP_Ok" name="İletim tamamlandı">
+      <bpmn:incoming>e4a</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="e1" sourceRef="Start_ERP" targetRef="Task_Send"/>
+    <bpmn:sequenceFlow id="e2" sourceRef="Task_Send" targetRef="GW_ERP"/>
+    <bpmn:sequenceFlow id="e3a" name="Başarılı" sourceRef="GW_ERP" targetRef="Task_HandleOk"/>
+    <bpmn:sequenceFlow id="e3b" name="Hata" sourceRef="GW_ERP" targetRef="Task_HandleFail"/>
+    <bpmn:sequenceFlow id="e4a" sourceRef="Task_HandleOk" targetRef="End_ERP_Ok"/>
+    <bpmn:sequenceFlow id="e4b" sourceRef="Task_HandleFail" targetRef="End_ERP_Fail"/>
+  </bpmn:process>
+
+  <bpmn:process id="Proc_B2B" isExecutable="false">
+    <bpmn:startEvent id="Start_Integ" name="Sipariş isteği alındı">
+      <bpmn:outgoing>b1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Task_Auth" name="Partner kimliğini doğrula">
+      <bpmn:incoming>b1</bpmn:incoming>
+      <bpmn:outgoing>b2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Auth" name="Kimlik geçerli mi?">
+      <bpmn:incoming>b2</bpmn:incoming>
+      <bpmn:outgoing>b3a</bpmn:outgoing>
+      <bpmn:outgoing>b3b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Rules" name="İş kurallarını uygula">
+      <bpmn:incoming>b3a</bpmn:incoming>
+      <bpmn:outgoing>b4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Rules" name="Kurallar sağlandı mı?">
+      <bpmn:incoming>b4</bpmn:incoming>
+      <bpmn:outgoing>b5a</bpmn:outgoing>
+      <bpmn:outgoing>b5b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_FailLog" name="Başarısız entegrasyonu logla">
+      <bpmn:incoming>b5b</bpmn:incoming>
+      <bpmn:outgoing>b6</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Create" name="Submitted sipariş oluştur">
+      <bpmn:incoming>b5a</bpmn:incoming>
+      <bpmn:outgoing>b7</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_OkLog" name="Başarılı entegrasyonu logla">
+      <bpmn:incoming>b7</bpmn:incoming>
+      <bpmn:outgoing>b8</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Fail" name="Süreç sonlandı (hata)">
+      <bpmn:incoming>b3b</bpmn:incoming>
+      <bpmn:incoming>b6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="End_Success" name="Süreç sonlandı (sipariş alındı)">
+      <bpmn:incoming>b8</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="b1" sourceRef="Start_Integ" targetRef="Task_Auth"/>
+    <bpmn:sequenceFlow id="b2" sourceRef="Task_Auth" targetRef="GW_Auth"/>
+    <bpmn:sequenceFlow id="b3a" name="Evet" sourceRef="GW_Auth" targetRef="Task_Rules"/>
+    <bpmn:sequenceFlow id="b3b" name="Hayır" sourceRef="GW_Auth" targetRef="End_Fail"/>
+    <bpmn:sequenceFlow id="b4" sourceRef="Task_Rules" targetRef="GW_Rules"/>
+    <bpmn:sequenceFlow id="b5a" name="Evet" sourceRef="GW_Rules" targetRef="Task_Create"/>
+    <bpmn:sequenceFlow id="b5b" name="Hayır" sourceRef="GW_Rules" targetRef="Task_FailLog"/>
+    <bpmn:sequenceFlow id="b6" sourceRef="Task_FailLog" targetRef="End_Fail"/>
+    <bpmn:sequenceFlow id="b7" sourceRef="Task_Create" targetRef="Task_OkLog"/>
+    <bpmn:sequenceFlow id="b8" sourceRef="Task_OkLog" targetRef="End_Success"/>
+  </bpmn:process>
+</bpmn:definitions>

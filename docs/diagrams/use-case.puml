@@ -1,0 +1,59 @@
+@startuml b2b-use-case
+title B2B Order Management — UML Use Case Diagram
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 13
+skinparam actorStyle stickman
+skinparam packageBorderColor #1e3a5f
+skinparam packageBackgroundColor #f8fafc
+skinparam usecaseBorderColor #1e3a5f
+skinparam usecaseBackgroundColor #ffffff
+skinparam arrowColor #1e3a5f
+left to right direction
+
+actor "Satın Alma" as SA
+actor "Operasyon" as OP
+actor "Tedarikçi ERP" as ERP
+
+rectangle "B2B Order Management System" {
+  usecase "Katalogu görüntüle" as UC_ViewCat
+  usecase "Katalogu yönet" as UC_ManageCat
+  usecase "Sipariş oluştur" as UC_Create
+  usecase "İş kurallarını doğrula" as UC_Rules
+  usecase "Siparişi gönder" as UC_Submit
+  usecase "Siparişi onayla" as UC_Confirm
+  usecase "Stok düş" as UC_StockDown
+  usecase "Siparişi reddet" as UC_Reject
+  usecase "Siparişi sevk et" as UC_Ship
+  usecase "Siparişi iptal et" as UC_Cancel
+  usecase "Stok iade et" as UC_StockBack
+  usecase "Entegrasyon siparişi al" as UC_Integ
+  usecase "Partner kimliğini doğrula" as UC_Auth
+  usecase "Entegrasyonu logla" as UC_Log
+  usecase "Entegrasyon loglarını izle" as UC_LogView
+}
+
+SA --> UC_ViewCat
+SA --> UC_Create
+SA --> UC_Submit
+SA --> UC_Cancel
+
+OP --> UC_ManageCat
+OP --> UC_Confirm
+OP --> UC_Reject
+OP --> UC_Ship
+OP --> UC_Cancel
+OP --> UC_LogView
+
+ERP --> UC_Integ
+
+UC_Create ..> UC_Rules : <<include>>
+UC_Submit ..> UC_Rules : <<include>>
+UC_Confirm ..> UC_Rules : <<include>>
+UC_Confirm ..> UC_StockDown : <<include>>
+UC_Integ ..> UC_Auth : <<include>>
+UC_Integ ..> UC_Rules : <<include>>
+UC_Integ ..> UC_Log : <<include>>
+UC_Cancel .> UC_StockBack : <<extend>>\n(yalnızca Confirmed)
+@enduml

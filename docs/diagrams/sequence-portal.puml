@@ -1,0 +1,35 @@
+@startuml b2b-sequence-portal
+title Portal Sipariş Onayı — Sequence Diagram
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam sequenceParticipantBackgroundColor #f8fafc
+skinparam sequenceParticipantBorderColor #1e3a5f
+skinparam arrowColor #1e3a5f
+
+actor "Satın Alma" as SA
+actor "Operasyon" as OP
+participant "B2B API" as API
+participant "İş Kuralı Motoru" as BR
+database "Sipariş Verisi" as DB
+
+SA -> API : Taslak sipariş oluştur
+API -> BR : Master data, min. adet, stok kontrolü
+BR -> DB : Ürün ve tedarikçi oku
+alt Kural ihlali
+  API --> SA : Sipariş oluşturulamadı — süreç sonlanır
+else Kurallar sağlandı
+  API -> DB : Draft sipariş kaydet
+  API --> SA : Taslak oluşturuldu
+  SA -> API : Siparişi gönder (Submitted)
+  API --> SA : Sipariş operasyona iletildi
+  OP -> API : Siparişi onayla
+  API -> BR : Stok yeterliliğini tekrar doğrula
+  alt Stok yetersiz
+    API --> OP : Onay reddedildi — süreç sonlanır
+  else Stok yeterli
+    API -> DB : Stok düş, durum Confirmed
+    API --> OP : Sipariş onaylandı
+  end
+end
+@enduml

@@ -15,6 +15,8 @@
 - Customer 1—N Order
 - Order 1—N OrderItem
 - Product 1—N OrderItem
+- Supplier 1—N IntegrationLog (kimliği çözülen inbound istek)
+- Order 1—0..1 IntegrationLog (yalnızca başarılı olayda)
 
 ## Kısıtlar
 

@@ -1,0 +1,50 @@
+@startuml b2b-bpmn-portal
+title Portal Sipariş Süreci — BPMN 2.0 (Pool / Lane)
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam activityDiamondBackgroundColor #fff7ed
+skinparam activityDiamondBorderColor #c2410c
+skinparam activityStartColor #15803d
+skinparam activityEndColor #b91c1c
+skinparam swimlaneTitleBackgroundColor #1e3a5f
+skinparam swimlaneTitleFontColor #ffffff
+
+|Satın Alma|
+start
+:Taslak sipariş oluştur;
+
+|Sistem|
+:İş kurallarını doğrula
+(aktif kayıt, SKU, min. adet, stok);
+
+if (Kurallar sağlandı mı?) then (Hayır)
+  :Sipariş oluşturulamadı; <<#fecaca>>
+  stop
+else (Evet)
+endif
+
+|Satın Alma|
+:Siparişi gönder;
+
+|Operasyon|
+switch (Operasyon kararı?)
+case (Red)
+  :Siparişi reddet;
+  stop
+case (Onay)
+  :Siparişi onayla;
+endswitch
+
+|Sistem|
+if (Stok yeterli mi?) then (Hayır)
+  :Onay yapılamadı; <<#fecaca>>
+  stop
+else (Evet)
+  :Stok düş;
+endif
+
+|Operasyon|
+:Siparişi sevk et;
+stop
+@enduml

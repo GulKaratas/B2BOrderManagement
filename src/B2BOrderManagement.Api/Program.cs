@@ -31,21 +31,8 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/", () => Results.Ok(new
 {
-    name = "B2B Integration & Order Management API",
-    docs = new
-    {
-        openapi = "/openapi/v1.json",
-        postman = "postman/B2B-Order-Management.postman_collection.json"
-    },
-    endpoints = new[]
-    {
-        "/api/suppliers",
-        "/api/products",
-        "/api/customers",
-        "/api/orders",
-        "/api/integrations/orders",
-        "/api/integrations/logs"
-    }
+    name = "B2B Order Management API",
+    openapi = "/openapi/v1.json"
 }));
 
 if (!app.Environment.IsDevelopment())

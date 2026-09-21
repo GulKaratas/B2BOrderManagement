@@ -1,4 +1,4 @@
-# 9. Jira Backlog (örnek)
+# 9. Jira Backlog
 
 Proje anahtarı: `B2B`
 
@@ -22,7 +22,7 @@ Epic'ler:
 | B2B-9 | Task | BRD, FR, iş kuralları, UML | E4 | 5 |
 | B2B-10 | Task | Admin paneli ekran tasarımları | E4 | 5 |
 
-## Örnek user story
+## User story
 
 **B2B-5**  
 *Bir operasyon uzmanı olarak siparişi onayladığımda stoğun düşmesini istiyorum ki fazla satış olmasın.*

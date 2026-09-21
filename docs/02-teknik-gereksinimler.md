@@ -7,7 +7,7 @@ Monolitik REST API. İş kuralları servis katmanında, veri erişimi EF Core il
 ```
 Postman / Admin UI / Tedarikçi ERP
                 |
- trest        REST/JSON
+              REST/JSON
                 |
         ASP.NET Core Web API
                 |
@@ -18,7 +18,7 @@ Postman / Admin UI / Tedarikçi ERP
 
 | İhtiyaç | Seçim | Gerekçe |
 | --- | --- | --- |
-| API | ASP.NET Core Web API | Kurumsal .NET yığını, kolay OpenAPI |
+| API | ASP.NET Core Web API | Bildiğim yığın, OpenAPI hazır geliyor |
 | Veri | SQL Server | İlişkisel sipariş modeli, unique constraint |
 | ORM | EF Core | Code-first + seed |
 | Test | Postman | İstek / yanıt / hata senaryoları |

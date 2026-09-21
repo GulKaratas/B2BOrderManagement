@@ -1,24 +1,15 @@
-# Admin paneli — Figma aktarımı
+# Admin paneli — Figma
 
-Kaynak dosya: `ui-mockups/index.html`
+Mockup: `ui-mockups/index.html`
 
-CV'deki "Figma kullanarak admin paneli ve kullanıcı akışlarının arayüz tasarımlarını oluşturdum" maddesini bu ekranlarla somutlaştırabilirsin.
+Ekranları tarayıcıda açıp Figma’ya frame olarak aldım.
 
-## Ekranlar
+1. Dashboard
+2. Tedarikçiler
+3. Ürünler
+4. Siparişler
+5. Entegrasyon logları
 
-1. Dashboard — KPI + sipariş akışı
-2. Tedarikçiler — master data tablosu
-3. Ürünler — stok / min adet / discontinued
-4. Siparişler — Draft / Submitted / Confirmed
-5. Entegrasyon logları — success / fail
-
-## Figma adımları
-
-1. `ui-mockups/index.html` dosyasını tarayıcıda aç
-2. Her menü için ekran görüntüsü al
-3. Figma'da 1440x900 frame'ler oluştur: `Dashboard`, `Suppliers`, `Products`, `Orders`, `Logs`
-4. Görselleri yerleştir, üzerine Auto Layout ile buton/tablo component'leri çiz
-5. Prototype'da soldaki menü tıklanınca ilgili frame'e geç
-6. Ayrı bir flow: `Sipariş oluştur → Gönder → Onayla → Sevk et`
+Figma’da 1440x900 frame’ler: Dashboard, Tedarikçiler, Ürünler, Siparişler, Loglar. Soldaki menü prototype’da ilgili frame’e gidiyor. Sipariş akışı ayrıca: oluştur → gönder → onayla → sevk et.
 
 Renkler: arka plan `#0F172A`, kart `#1F2937`, vurgu `#38BDF8`.

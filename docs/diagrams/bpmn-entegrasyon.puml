@@ -1,0 +1,47 @@
+@startuml b2b-bpmn-entegrasyon
+title Entegrasyon Sipariş Süreci — BPMN 2.0 (Pool / Lane)
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam activityDiamondBackgroundColor #fff7ed
+skinparam activityDiamondBorderColor #c2410c
+skinparam activityStartColor #15803d
+skinparam activityEndColor #b91c1c
+skinparam swimlaneTitleBackgroundColor #1e3a5f
+skinparam swimlaneTitleFontColor #ffffff
+
+|Tedarikçi ERP|
+start
+:Sipariş isteğini ilet;
+
+|B2B Sistem|
+:Partner kimliğini doğrula;
+
+if (Kimlik geçerli mi?) then (Hayır)
+  :Yetkisiz — süreç sonlanır; <<#fecaca>>
+  |Tedarikçi ERP|
+  :Hata kaydını incele;
+  stop
+else (Evet)
+endif
+
+|B2B Sistem|
+:İş kurallarını uygula
+(müşteri, ürün, stok, min. adet);
+
+if (Kurallar sağlandı mı?) then (Hayır)
+  :Başarısız entegrasyonu logla;
+  :İş kuralı hatası — süreç sonlanır; <<#fecaca>>
+  |Tedarikçi ERP|
+  :Hata kaydını incele;
+  stop
+else (Evet)
+  |B2B Sistem|
+  :Submitted sipariş oluştur;
+  :Başarılı entegrasyonu logla;
+endif
+
+|Tedarikçi ERP|
+:Sipariş numarasını kaydet;
+stop
+@enduml

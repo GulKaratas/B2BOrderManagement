@@ -1,0 +1,84 @@
+@startuml b2b-conceptual-data-model
+title Kavramsal Veri Modeli
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam classBackgroundColor #ffffff
+skinparam classBorderColor #1e3a5f
+skinparam arrowColor #1e3a5f
+
+entity "Tedarikçi" as Supplier {
+  * Tedarikçi Kodu
+  --
+  Firma Adı
+  Vergi Numarası
+  İletişim
+  Durum
+  Entegrasyon Anahtarı
+}
+
+entity "Ürün" as Product {
+  * SKU
+  --
+  Ürün Adı
+  Kategori
+  Birim Fiyat
+  Stok Adedi
+  Min. Sipariş Adedi
+  Durum
+}
+
+entity "Müşteri" as Customer {
+  * Müşteri Kodu
+  --
+  Firma Adı
+  E-posta
+  Şehir
+  Durum
+}
+
+entity "Sipariş" as Order {
+  * Sipariş Numarası
+  --
+  Kaynak (Portal / Entegrasyon)
+  Durum
+  Toplam Tutar
+  Not
+  Sipariş Tarihi
+}
+
+entity "Sipariş Kalemi" as OrderItem {
+  * Kalem
+  --
+  Adet
+  Birim Fiyat
+  Satır Tutarı
+}
+
+entity "Entegrasyon Kaydı" as Log {
+  * Olay Referansı
+  --
+  Yön
+  Olay Tipi
+  Sonuç (Başarılı / Başarısız)
+  Hata Açıklaması
+  Oluşturma Zamanı
+}
+
+Supplier ||--o{ Product : "katalogunu içerir"
+Supplier ||--o{ Order : "sipariş alır"
+Customer ||--o{ Order : "sipariş verir"
+Order ||--|{ OrderItem : "kalemlerden oluşur"
+Product ||--o{ OrderItem : "kalemde yer alır"
+Supplier ||--o{ Log : "istek gönderir"
+Order ||--o| Log : "başarılı olayda üretilir"
+
+note right of Log
+  Kimlik doğrulaması başarısızsa
+  tedarikçi bağlanmayabilir.
+  Sipariş oluşmazsa
+  sipariş ilişkisi boş kalır.
+end note
+@enduml

@@ -1,56 +1,47 @@
 # B2B Integration & Order Management System
 
-B2B tedarikçi, ürün ve sipariş süreçlerini destekleyen REST tabanlı entegrasyon ve sipariş yönetim sistemi. İş analizi çıktıları (BRD, FR, iş kuralları, kullanıcı akışları), ilişkisel veri modeli, UML diyagramları, Postman kabul testleri ve çalışan ASP.NET Core Web API birlikte teslim edilir.
+B2B tedarikçi, ürün ve sipariş sürecini baştan sona modellemek için hazırladığım iş analizi ve REST API projesi. Gereksinimleri, iş kurallarını, kullanıcı akışlarını ve veri modelini ben çıkardım; API’yi ASP.NET Core + SQL Server üzerinde ayağa kaldırıp Postman’da test ettim.
 
-1. [İş Problemi, Kapsam ve Değer Önerisi](#1--iş-problemi-kapsam-ve-değer-önerisi)
-2. [Sipariş Karar Mimarisi & İş Kuralları](#2--sipariş-karar-mimarisi--iş-kuralları)
-3. [Süreç Akışları, UML ve Entegrasyon Modellemesi](#3--süreç-akışları-uml-ve-entegrasyon-modellemesi)
-4. [Veri Modelleme & İlişkisel Mimari (ERD)](#4-️-veri-modelleme--ilişkisel-mimari-erd)
-5. [Agile / Scrum Yönetimi & Jira İzlenebilirliği](#5--agile--scrum-yönetimi--jira-izlenebilirliği)
-6. [Admin Paneli ve Kullanıcı Akışı Arayüzü](#6-️-admin-paneli-ve-kullanıcı-akışı-arayüzü)
-7. [Test Doğrulama ve Kabul Kriterleri (Postman)](#7--test-doğrulama-ve-kabul-kriterleri-postman)
-8. [Hızlı Başlangıç (Mimari & Dağıtım Özeti)](#8-️-hızlı-başlangıç-mimari--dağıtım-özeti)
+1. [İş problemi ve kapsam](#1--iş-problemi-ve-kapsam)
+2. [Sipariş karar mimarisi ve iş kuralları](#2--sipariş-karar-mimarisi-ve-iş-kuralları)
+3. [Süreç modelleme (Use Case, BPMN, Sequence)](#3--süreç-modelleme-use-case-bpmn-sequence)
+4. [Kavramsal veri modeli](#4--kavramsal-veri-modeli)
+5. [Jira backlog](#5--jira-backlog)
+6. [Admin paneli](#6--admin-paneli)
+7. [Postman testleri](#7--postman-testleri)
+8. [Çalıştırma](#8--çalıştırma)
 
 ---
 
-## 1. İş Problemi, Kapsam ve Değer Önerisi
+## 1. İş problemi ve kapsam
 
-### Mevcut Durum Analizi & İş Problemi (Problem Statement)
-
-Üretici / distribütör şirketlerde tedarikçi siparişleri hâlâ e-posta, Excel ve dağınık ERP çıktılarıyla ilerler. Merkezi bir sipariş ve entegrasyon katmanı olmadığında aşağıdaki operasyonel ve finansal riskler ortaya çıkar:
-
-* **Fazla Satış (Over-Order):** Anlık stok görünür olmadığı için mevcut adedin üzerinde sipariş onaylanır; tedarikçi taahhüdü bozulur.
-* **Hatalı Master Data:** Yanlış SKU, pasif ürün veya başka tedarikçiye ait kalem siparişe girer; düzeltme maliyeti operasyona yansır.
-* **Onay Gecikmesi:** Sipariş durumları (`Draft`, `Submitted`, `Confirmed`) standart olmadığı için tedarikçi teyidi takip edilemez.
-* **Kör Entegrasyon:** Partner ERP’sinden gelen istekler loglanmaz; hatalı payload sessizce kaybolur veya mükerrer sipariş üretir.
+Siparişler e-posta ve Excel ile gidince stok güncel kalmıyor, yanlış SKU giriliyor, tedarikçi onayı takip edilemiyor. Partner ERP’den gelen istekler de bir yerde durmuyor; hata olunca kimse görmüyor.
 
 ```
 +---------------------------------------------------------------------------------------------------+
-|                                  GELENEKSEL vs. ANALİTİK ÇÖZÜM                                   |
+|                                  E-POSTA / EXCEL vs. BU PROJE                                    |
 +------------------------------------+--------------------------------------------------------------+
-|  Geleneksel Yaklaşım               |  B2B Sipariş & Entegrasyon Platformu                         |
+|  Mevcut işleyiş                    |  Bu sistem                                                   |
 +------------------------------------+--------------------------------------------------------------+
 | • E-posta / Excel sipariş          | • REST API + standart sipariş yaşam döngüsü                  |
 | • Stok görünürlüğü yok             | • Min. adet ve stok kuralı sipariş anında uygulanır          |
-| • Durum takibi belirsiz            | • Draft → Submitted → Confirmed → Shipped geçiş matrisi      |
-| • Partner hataları izlenemez       | • X-Api-Key + IntegrationLogs (success / fail)               |
-| • Operasyon IT’ye bağımlı          | • Admin paneli, iş kuralı motoru ve Postman kabul testleri   |
+| • Durum takibi belirsiz            | • Draft → Submitted → Confirmed → Shipped                    |
+| • Partner hataları izlenemez       | • API Key + IntegrationLogs                                  |
+| • Operasyon IT’ye bağlı            | • Admin paneli + Postman senaryoları                         |
 +------------------------------------+--------------------------------------------------------------+
 ```
 
-### Analitik Çözüm ve Sağlanan Değer (Value Proposition)
+Sistemde tedarikçi, ürün ve müşteri tek yerde duruyor. Sipariş durumu iş kurallarına bağlı. ERP’den gelen sipariş API Key ile doğrulanıyor. Stoku onay anında düşürdüm; hatalı entegrasyonu da sipariş oluşmasa bile log’a yazıyorum.
 
-Geliştirilen sistem; tedarikçi–ürün–müşteri master datasını tek kaynakta tutar, sipariş durum geçişlerini iş kurallarına bağlar ve B2B partner ERP’sinden gelen inbound siparişleri API Key ile doğrular. Stok yalnızca **onay (`Confirmed`)** anında düşer; hatalı entegrasyonlar sipariş yazmasa bile `IntegrationLogs` tablosuna kaydedilir. Böylece fazla satış, kör hata ve izlenemeyen partner trafiği ortadan kalkar.
+**Bu sürümde var:** katalog, sipariş akışı, stok / min. adet kuralları, inbound entegrasyon, log, admin ekranları.
 
-**Kapsam (v1):** tedarikçi/ürün kataloğu, sipariş yaşam döngüsü, stok ve min. adet kuralları, inbound REST entegrasyonu, entegrasyon logları, admin paneli ekranları.
-
-**Kapsam dışı (v1):** ödeme / faturalama, kargo takip numarası, çoklu kur servisi, stok webhook’u (v2).
+**Bilinçli olarak bırakmadım:** ödeme, kargo takip no, kur servisi, stok webhook’u.
 
 ---
 
-## 2. Sipariş Karar Mimarisi & İş Kuralları
+## 2. Sipariş karar mimarisi ve iş kuralları
 
-Sistem, iş analistlerinin sipariş kararlarını standart bir mantıkla tanımlayabilmesi için durum makinesi + kural tablosu yaklaşımını uygular. Stok rezervasyonu onay anına kadar ertelenir; geçersiz geçişler HTTP 409 ile reddedilir.
+Siparişi durum makinesi + kural tablosuyla bağladım. Stoku taslakta rezerve etmiyorum; onay gelene kadar dokunmuyorum. Matrise uymayan geçişi 409 ile kesiyorum.
 
 ```
                   ┌────────────────────────────────────────────────────────┐
@@ -127,146 +118,64 @@ Portal siparişi `Draft` açılır. Tedarikçi ERP’sinden gelen inbound sipari
 
 ---
 
-## 3. Süreç Akışları, UML ve Entegrasyon Modellemesi
+## 3. Süreç modelleme (Use Case, BPMN, Sequence)
 
-Süreçler durum diyagramı, entegrasyon iş akışı, use case ve ERD ile modellenmiştir. Kaynak diyagramlar: `docs/08-uml-diyagramlari.md`.
-
-### Portal ve Entegrasyon Sipariş Süreci
-
-```
-[Satın Alma / Portal]                 [Tedarikçi ERP]
-         │                                    │
-         │ POST /api/orders                   │ POST /api/integrations/orders
-         │ (Draft)                            │ X-Api-Key
-         ▼                                    ▼
-              ┌─────────── İş Kuralı Motoru ───────────┐
-              │  Active kayıt, SKU, min adet, stok     │
-              └──────────────────┬─────────────────────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-              (Kurallar OK)             (Kural ihlali)
-                    │                         │
-                    ▼                         ▼
-         [Draft / Submitted]          [400/401/404/409]
-                    │                 [Failed log]
-                    ▼
-         Operasyon: submit → confirm (stok düşer) → ship
-                    │
-                    ▼
-              [Nihai sipariş kaydı]
-```
-
-### Sipariş Durum Diyagramı
-
-```mermaid
-stateDiagram-v2
-    [*] --> Draft: Portal oluştur
-    [*] --> Submitted: Entegrasyon
-    Draft --> Submitted: submit
-    Draft --> Cancelled: cancel
-    Submitted --> Confirmed: confirm (stok düşer)
-    Submitted --> Rejected: reject
-    Submitted --> Cancelled: cancel
-    Confirmed --> Shipped: ship
-    Confirmed --> Cancelled: cancel (stok iade)
-    Rejected --> [*]
-    Shipped --> [*]
-    Cancelled --> [*]
-```
-
-### B2B Inbound Entegrasyon Akışı
-
-```mermaid
-flowchart TD
-    A[Tedarikçi ERP] -->|POST /api/integrations/orders| B{X-Api-Key geçerli mi?}
-    B -->|Hayır| C[401 UNAUTHORIZED]
-    B -->|Evet| D{Tedarikçi Active mi?}
-    D -->|Hayır| E[409 + Failed log]
-    D -->|Evet| F{Müşteri ve SKU çözülür mü?}
-    F -->|Hayır| E
-    F -->|Evet| G{Stok ve min adet OK?}
-    G -->|Hayır| E
-    G -->|Evet| H[Submitted sipariş + Success log]
-```
+Diyagramları UML ve BPMN notasyonuyla çizdim. Kaynaklar `docs/08-uml-diyagramlari.md` ve `docs/diagrams/` altında.
 
 ### Use Case
 
-```mermaid
-flowchart LR
-    subgraph Actors
-      OP[Operasyon]
-      SA[Satın Alma]
-      ERP[Tedarikçi ERP]
-    end
-    subgraph System
-      UC1[Katalog yönet]
-      UC2[Sipariş oluştur]
-      UC3[Sipariş onayla]
-      UC4[Entegrasyon siparişi al]
-      UC5[Log izle]
-    end
-    SA --> UC2
-    OP --> UC1
-    OP --> UC3
-    OP --> UC5
-    ERP --> UC4
-```
+Aktörler sistem dışında, senaryolar oval. Ortak kontrolleri `<<include>>` ile bağladım. Confirmed sipariş iptalinde stok iadesi `<<extend>>`.
+
+![Use Case](docs/diagrams/use-case.svg)
+
+### BPMN — Portal siparişi
+
+Satın Alma, Sistem, Operasyon lane’leri. Başlangıç / bitiş event’leri ve exclusive gateway’ler var; hata yolları da End Event ile kapanıyor.
+
+![Portal sipariş süreci](docs/diagrams/bpmn-portal-siparis.svg)
+
+### BPMN — Entegrasyon siparişi
+
+Tedarikçi ERP ve B2B Sistem ayrı havuz. Kimlik veya kural tutmazsa süreç orada bitiyor.
+
+![Entegrasyon sipariş süreci](docs/diagrams/bpmn-entegrasyon.svg)
+
+### Sequence — Inbound entegrasyon
+
+ERP ile API arasındaki mesajlaşmayı sequence diagram’da tuttum. Path / header gibi detayı iş diline indirdim.
+
+![Inbound entegrasyon](docs/diagrams/sequence-entegrasyon.svg)
+
+### Durum makinesi
+
+![Sipariş durumları](docs/diagrams/state-siparis.svg)
 
 ---
 
-## 4. Veri Modelleme & İlişkisel Mimari (ERD)
+## 4. Kavramsal veri modeli
 
-İş kurallarının sürdürülebilir ve ilişkisel bütünlük içinde saklanması için 3. Normal Formda (3NF) tasarlanmış 6 ana tablo bulunmaktadır. DDL: `database/01-schema.sql`.
+ERD’yi iş diliyle çizdim; kutularda `int` / `string` yok. Crow’s Foot kullandım. Fiziksel tablo tipleri `database/01-schema.sql` içinde.
 
-```mermaid
-erDiagram
-    SUPPLIERS ||--o{ PRODUCTS : has
-    SUPPLIERS ||--o{ ORDERS : receives
-    CUSTOMERS ||--o{ ORDERS : places
-    ORDERS ||--|{ ORDERITEMS : contains
-    PRODUCTS ||--o{ ORDERITEMS : included-in
-    INTEGRATIONLOGS {
-        int Id
-        string EventType
-        string Status
-    }
-    SUPPLIERS {
-        int Id
-        string Code
-        string ApiKey
-        string Status
-    }
-    PRODUCTS {
-        int Id
-        string Sku
-        int StockQuantity
-    }
-    ORDERS {
-        int Id
-        string OrderNumber
-        string Status
-    }
-```
+Entegrasyon kaydını tedarikçiye bağladım. Sipariş ancak istek gerçekten siparişe dönüşürse ilişkileniyor.
 
-### Tablo Sorumlulukları ve İlişki Matrisi
+![Kavramsal veri modeli](docs/diagrams/conceptual-data-model.svg)
 
-| Varlık / Tablo | Açıklama | İlişkiler |
+### Varlık Sorumlulukları ve İlişki Matrisi
+
+| Varlık | İş sorumluluğu | İlişkiler |
 | :--- | :--- | :--- |
-| **`Suppliers`** | Tedarikçi master data, vergi no, durum ve entegrasyon `ApiKey` değerini tutar. | `1 - N` ➔ `Products` `1 - N` ➔ `Orders` |
-| **`Products`** | SKU, kategori, birim fiyat, stok ve min. sipariş adedini yönetir. | `N - 1` ➔ `Suppliers` `1 - N` ➔ `OrderItems` |
-| **`Customers`** | Sipariş veren B2B müşteri kodu ve aktiflik durumunu saklar. | `1 - N` ➔ `Orders` |
-| **`Orders`** | Sipariş numarası, kaynak (`Portal` / `Integration`), durum ve tutarı tutar. | `N - 1` ➔ `Customers` `N - 1` ➔ `Suppliers` `1 - N` ➔ `OrderItems` |
-| **`OrderItems`** | Kalem adedi, birim fiyat ve satır tutarını saklar. | `N - 1` ➔ `Orders` `N - 1` ➔ `Products` |
-| **`IntegrationLogs`** | Inbound istek payload’ı, referans no, success/fail ve hata mesajını kaydeder. | bağımsız olay tablosu |
-
-**Kısıtlar:** `Suppliers.Code`, `TaxNumber`, `ApiKey`; `Products.Sku`; `Customers.Code`; `Orders.OrderNumber` alanları unique’tir. Tedarikçi silinince ürün/sipariş Restrict ile korunur.
+| **Tedarikçi** | Partner master data, durum, entegrasyon kimliği | `1 - N` Ürün, `1 - N` Sipariş, `1 - N` Entegrasyon Kaydı |
+| **Ürün** | Katalog, stok, min. sipariş adedi | `N - 1` Tedarikçi, `1 - N` Sipariş Kalemi |
+| **Müşteri** | Sipariş veren B2B firma | `1 - N` Sipariş |
+| **Sipariş** | Yaşam döngüsü, kaynak, tutar | `N - 1` Müşteri, `N - 1` Tedarikçi, `1 - N` Kalem, `1 - 0..1` Entegrasyon Kaydı |
+| **Sipariş Kalemi** | Adet ve satır tutarı | `N - 1` Sipariş, `N - 1` Ürün |
+| **Entegrasyon Kaydı** | Inbound olayın başarı / hata izi | `N - 1` Tedarikçi (opsiyonel), `N - 0..1` Sipariş |
 
 ---
 
-## 5. Agile / Scrum Yönetimi & Jira İzlenebilirliği
+## 5. Jira backlog
 
-Proje, kurumsal Agile/Scrum çerçevesinde **57 Story Point** iş yüküyle planlanmış; gereksinimler Epic, User Story ve Gherkin BDD formatında kabul kriterlerine dönüştürülmüştür. Backlog: `docs/09-jira-backlog.md`.
+İşleri Epic / Story / Task olarak böldüm, tahmini efor **57 SP**. Detay: `docs/09-jira-backlog.md`.
 
 | Key | Tip | Özet | Epic | Story Point |
 | :---: | :--- | :--- | :---: | :---: |
@@ -281,37 +190,33 @@ Proje, kurumsal Agile/Scrum çerçevesinde **57 Story Point** iş yüküyle plan
 | **B2B-9** | Task | BRD, FR, iş kuralları, UML | E4 Analiz | 5 |
 | **B2B-10** | Task | Admin paneli ekran tasarımları | E4 Analiz | 5 |
 
-### Örnek User Story & Gherkin Kabul Kriterleri (BDD)
+### User story / Gherkin
 
 ```gherkin
-Feature: Sipariş onayı ve stok koruması
-  As an Operations Specialist
-  I want stock to decrease only when an order is confirmed
-  So that we never oversell supplier inventory.
+Feature: Sipariş onayı ve stok
+  Operasyon uzmanı olarak stoğun yalnızca onayda düşmesini istiyorum,
+  fazla satış olmasın.
 
-  Scenario: Submitted sipariş onaylandığında stok düşer
+  Scenario: Submitted sipariş onaylanınca stok düşer
     Given Ürün SKU "NRD-MTR-001" için stok adedi 40'tır
     And Sipariş durumu "Submitted" olarak belirlenmiştir
     And Sipariş kalemi 1 adet motordur
     When Operasyon siparişi onayladığında
     Then Sipariş durumu "Confirmed" olmalıdır
     And Stok adedi 39 olmalıdır
-    And HTTP yanıt kodu 200 dönmelidir
 
-  Scenario: Stok yetersizken sipariş oluşturulamaz
+  Scenario: Stok yetmezken sipariş açılmaz
     Given Ürün SKU "NRD-CBL-220" için stok adedi 8'dir
-    And Minimum sipariş adedi 10'dur
     When 50 adet kablo için sipariş oluşturulmak istendiğinde
     Then Sistem "STOCK_INSUFFICIENT" hatası üretmelidir
-    And HTTP yanıt kodu 409 dönmelidir
-    And Sipariş kaydı oluşmamalıdır
+    And HTTP 409 dönmelidir
 ```
 
 ---
 
-## 6. Admin Paneli ve Kullanıcı Akışı Arayüzü
+## 6. Admin paneli
 
-Operasyon ve satın alma ekiplerinin IT desteğine ihtiyaç duymadan kataloğu, siparişleri ve entegrasyon loglarını izleyebilmesi için admin konsolu tasarlanmıştır. Ekranlar: `ui-mockups/index.html`.
+HTML mockup’ı `ui-mockups/index.html` içinde. Figma’ya aktarma notlarım: `docs/11-figma-ekranlari.md`.
 
 ### Dashboard — Operasyon Özeti
 Aktif tedarikçi, bekleyen / onaylı sipariş ve başarısız entegrasyon KPI’larının tek bakışta görüldüğü özet ekran. Sipariş akışı (Taslak → Gönderildi → Onay/Red → Sevkiyat) süreç kuralını görünür kılar.
@@ -330,13 +235,13 @@ Inbound `CreateOrder` olaylarının success / fail dökümü. Partner ERP hatala
 
 ---
 
-## 7. Test Doğrulama ve Kabul Kriterleri (Postman)
+## 7. Postman testleri
 
-Sistem kalitesi ve iş kurallarının doğruluğu, **Postman Collection Runner** ile uçtan uca test edilmiştir.
+Koleksiyonu Collection Runner ile koştum. 13 senaryonun hepsi geçti (happy path + 400/401/404/409).
 
 * Koleksiyon: `postman/B2B-Order-Management.postman_collection.json`
 * Ortam: `postman/B2B-Local.postman_environment.json`
-* Demo API Key: `sup-nordic-demo-key-2026`
+* Test API Key: `sup-nordic-demo-key-2026`
 
 ### Postman Test Senaryoları Matrisi
 
@@ -356,11 +261,11 @@ Sistem kalitesi ve iş kurallarının doğruluğu, **Postman Collection Runner**
 | **TC-12** | Geçerli entegrasyon | `CUS-METAL` + `NRD-SNS-014` x 10 | HTTP 201, `Submitted`, `Source=Integration` | PASS |
 | **TC-13** | Bilinmeyen müşteri | `customerCode: CUS-UNKNOWN` | HTTP 404 + Failed log | PASS |
 
-> **Performans özeti:** Postman Runner üzerinde koşan kabul senaryolarının tamamı (13/13) LocalDB üzerinde başarıyla doğrulanmıştır. Koleksiyon assertion’ları HTTP kodu, hata kodu ve sipariş durumu alanlarını kontrol eder.
+> Postman assertion’ları status kodu, hata kodu ve sipariş durumunu kontrol ediyor.
 
 ---
 
-## 8. Hızlı Başlangıç (Mimari & Dağıtım Özeti)
+## 8. Çalıştırma
 
 ### Sistem Bileşenleri
 
@@ -389,9 +294,7 @@ cd src/B2BOrderManagement.Api
 dotnet run --launch-profile http
 ```
 
-İlk açılışta LocalDB üzerinde `B2BOrderManagement` veritabanı oluşturulur ve örnek tedarikçi / ürün / sipariş verileri yüklenir.
-
-API zaten çalışıyorsa exe kilitlenir; önce mevcut süreci kapatın, ardından komutu yeniden çalıştırın.
+İlk açılışta LocalDB’de veritabanı ve örnek kayıtlar oluşuyor. Aynı anda ikinci `dotnet run` exe’yi kilitler; önce açık süreci kapat.
 
 ---
 
@@ -417,11 +320,7 @@ API zaten çalışıyorsa exe kilitlenir; önce mevcut süreci kapatın, ardınd
 | `docs/05-fonksiyonel-gereksinimler.md` | FR kataloğu |
 | `docs/06-veri-modeli.md` | Varlıklar ve kısıtlar |
 | `docs/07-api-tasarimi.md` | Endpoint sözleşmesi |
-| `docs/08-uml-diyagramlari.md` | Durum, akış, use case, ERD |
+| `docs/08-uml-diyagramlari.md` | UML Use Case, BPMN 2.0, Sequence, kavramsal ERD |
 | `docs/09-jira-backlog.md` | Epic / story / puan |
 | `docs/10-test-senaryolari.md` | TC-01 … TC-13 |
 | `docs/11-figma-ekranlari.md` | Admin paneli Figma aktarımı |
-
----
-
-*Bu dokümantasyon, B2B Integration & Order Management System projesinin İş ve Sistem Analizi standartlarına uygunluğunu sergilemek amacıyla hazırlanmıştır.*

@@ -1,6 +1,6 @@
 # 10. Test Senaryoları
 
-Postman koleksiyonu bu senaryoları otomatik assertion ile koşar.
+Postman koleksiyonunda assertion’larla koştuğum senaryolar:
 
 | ID | Senaryo | Beklenen |
 | --- | --- | --- |
@@ -17,11 +17,3 @@ Postman koleksiyonu bu senaryoları otomatik assertion ile koşar.
 | TC-11 | Hatalı API Key | 401 |
 | TC-12 | Geçerli entegrasyon siparişi | 201 Submitted + success log |
 | TC-13 | Bilinmeyen müşteri kodu | 404 + failed log |
-
-## Figma notu
-
-`ui-mockups/index.html` dosyası admin paneli ekranlarını içerir. Portföy için:
-
-1. Tarayıcıda aç, ekran görüntüsü al
-2. Figma'ya Frame olarak yapıştır
-3. Soldan sağa akış: Dashboard → Tedarikçiler → Ürünler → Siparişler → Entegrasyon Logları

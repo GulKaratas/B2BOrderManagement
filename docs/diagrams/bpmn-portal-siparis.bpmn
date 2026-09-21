@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Defs_PortalSiparis"
+                  targetNamespace="https://b2b-order-management.local">
+  <bpmn:collaboration id="Collab_Portal">
+    <bpmn:participant id="Part_Portal" name="B2B Sipariş Süreci (Portal)" processRef="Proc_Portal"/>
+  </bpmn:collaboration>
+  <bpmn:process id="Proc_Portal" isExecutable="false">
+    <bpmn:laneSet>
+      <bpmn:lane id="Lane_SA" name="Satın Alma">
+        <bpmn:flowNodeRef>Start_Portal</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Draft</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_DraftOk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Submit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_DraftFail</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_SYS" name="Sistem / İş Kuralları">
+        <bpmn:flowNodeRef>Task_Validate</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Stock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>GW_Stock</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_StockFail</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_OP" name="Operasyon">
+        <bpmn:flowNodeRef>GW_Decision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Confirm</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Reject</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Ship</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Rejected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Shipped</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="Start_Portal" name="Sipariş ihtiyacı oluştu">
+      <bpmn:outgoing>f1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_Draft" name="Taslak sipariş oluştur">
+      <bpmn:incoming>f1</bpmn:incoming>
+      <bpmn:outgoing>f2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Validate" name="İş kurallarını doğrula">
+      <bpmn:incoming>f2</bpmn:incoming>
+      <bpmn:outgoing>f3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_DraftOk" name="Kurallar sağlandı mı?">
+      <bpmn:incoming>f3</bpmn:incoming>
+      <bpmn:outgoing>f4</bpmn:outgoing>
+      <bpmn:outgoing>f4b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_DraftFail" name="Sipariş oluşturulamadı">
+      <bpmn:incoming>f4b</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Task_Submit" name="Siparişi gönder">
+      <bpmn:incoming>f4</bpmn:incoming>
+      <bpmn:outgoing>f5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="GW_Decision" name="Operasyon kararı">
+      <bpmn:incoming>f5</bpmn:incoming>
+      <bpmn:outgoing>f6a</bpmn:outgoing>
+      <bpmn:outgoing>f6b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_Reject" name="Siparişi reddet">
+      <bpmn:incoming>f6b</bpmn:incoming>
+      <bpmn:outgoing>f7b</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="End_Rejected" name="Reddedildi">
+      <bpmn:incoming>f7b</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Task_Confirm" name="Siparişi onayla">
+      <bpmn:incoming>f6a</bpmn:incoming>
+      <bpmn:outgoing>f8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Stock" name="Stok düş">
+      <bpmn:incoming>f8</bpmn:incoming>
+      <bpmn:outgoing>f9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Stock" name="Stok yeterli mi?">
+      <bpmn:incoming>f9</bpmn:incoming>
+      <bpmn:outgoing>f10a</bpmn:outgoing>
+      <bpmn:outgoing>f10b</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_StockFail" name="Onay yapılamadı">
+      <bpmn:incoming>f10b</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:userTask id="Task_Ship" name="Siparişi sevk et">
+      <bpmn:incoming>f10a</bpmn:incoming>
+      <bpmn:outgoing>f11</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="End_Shipped" name="Sevk edildi">
+      <bpmn:incoming>f11</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="f1" sourceRef="Start_Portal" targetRef="Task_Draft"/>
+    <bpmn:sequenceFlow id="f2" sourceRef="Task_Draft" targetRef="Task_Validate"/>
+    <bpmn:sequenceFlow id="f3" sourceRef="Task_Validate" targetRef="GW_DraftOk"/>
+    <bpmn:sequenceFlow id="f4" name="Evet" sourceRef="GW_DraftOk" targetRef="Task_Submit"/>
+    <bpmn:sequenceFlow id="f4b" name="Hayır" sourceRef="GW_DraftOk" targetRef="End_DraftFail"/>
+    <bpmn:sequenceFlow id="f5" sourceRef="Task_Submit" targetRef="GW_Decision"/>
+    <bpmn:sequenceFlow id="f6a" name="Onay" sourceRef="GW_Decision" targetRef="Task_Confirm"/>
+    <bpmn:sequenceFlow id="f6b" name="Red" sourceRef="GW_Decision" targetRef="Task_Reject"/>
+    <bpmn:sequenceFlow id="f7b" sourceRef="Task_Reject" targetRef="End_Rejected"/>
+    <bpmn:sequenceFlow id="f8" sourceRef="Task_Confirm" targetRef="Task_Stock"/>
+    <bpmn:sequenceFlow id="f9" sourceRef="Task_Stock" targetRef="GW_Stock"/>
+    <bpmn:sequenceFlow id="f10a" name="Evet" sourceRef="GW_Stock" targetRef="Task_Ship"/>
+    <bpmn:sequenceFlow id="f10b" name="Hayır" sourceRef="GW_Stock" targetRef="End_StockFail"/>
+    <bpmn:sequenceFlow id="f11" sourceRef="Task_Ship" targetRef="End_Shipped"/>
+  </bpmn:process>
+</bpmn:definitions>

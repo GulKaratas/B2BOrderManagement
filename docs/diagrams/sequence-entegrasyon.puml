@@ -1,0 +1,36 @@
+@startuml b2b-sequence-integration
+title Inbound Sipariş Entegrasyonu — Sequence Diagram
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Segoe UI
+skinparam sequenceParticipantBackgroundColor #f8fafc
+skinparam sequenceParticipantBorderColor #1e3a5f
+skinparam sequenceLifeLineBorderColor #64748b
+skinparam arrowColor #1e3a5f
+skinparam responseMessageBelowArrow true
+
+actor "Tedarikçi ERP" as ERP
+participant "B2B API" as API
+participant "İş Kuralı Motoru" as BR
+database "Sipariş Verisi" as DB
+
+ERP -> API : Sipariş oluşturma isteği\n(müşteri kodu, SKU, adet)
+API -> API : Partner kimliğini doğrula
+
+alt Kimlik geçersiz
+  API --> ERP : Yetkisiz — süreç sonlanır
+else Kimlik geçerli
+  API -> BR : Sipariş bağlamını değerlendir
+  BR -> DB : Tedarikçi, müşteri, ürün ve stok oku
+  BR --> API : Kural sonucu
+
+  alt İş kuralı ihlali
+    API -> DB : Başarısız entegrasyon kaydı yaz
+    API --> ERP : İş kuralı hatası — süreç sonlanır
+  else Kurallar sağlandı
+    API -> DB : Submitted sipariş oluştur
+    API -> DB : Başarılı entegrasyon kaydı yaz
+    API --> ERP : Sipariş alındı (Submitted)
+  end
+end
+@enduml
